@@ -1,11 +1,12 @@
-import { Image, View, TouchableOpacity } from "react-native"
+import { Image, View, TouchableOpacity, FlatList, Modal, Text } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
 
 import { styles } from "./styles"
 import { colors } from "@/styles/colors"
 
-import { Category } from "@/components/category"
-
+import { Link } from "@/components/link"
+import { Categories } from "@/components/categories"
+import { Option } from "@/components/option"
 
 export default function Index() {
     return (
@@ -18,9 +19,41 @@ export default function Index() {
                 </TouchableOpacity>
             </View>
 
-            <Category name="Projetos" icon="code" />
-            <Category name="Site" icon="language" />
-            <Category name="Video" icon="movie" />
+            <Categories />
+
+
+
+            <FlatList
+                data={["1", "2", "3"]}
+                keyExtractor={(item) => item}
+                renderItem={() => (
+                    <Link name="Nathan" url="https://my-cv-rho-murex.vercel.app/" onDetails={() => console.log("clicou")}
+                    />
+                )}
+                style={styles.links}
+                contentContainerStyle={styles.linksContent}
+                showsVerticalScrollIndicator={false}
+            />
+
+            <Modal transparent visible={true}>
+                <View style={styles.modal}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalCategory}>Curso</Text>
+                            <TouchableOpacity>
+                                <MaterialIcons name="close" size={20} color={colors.gray[400]} />
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={styles.modalLinkName}>Nathan Roberto</Text>
+                        <Text style={styles.modalUrl}>https://my-cv-rho-murex.vercel.app/</Text>
+                        <View style={styles.modalFooter}>
+                            <Option name="Excluir" icon="delete" variant="secondary" />
+                            <Option name="Abrir" icon="language" />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
         </View>
     )
 }
