@@ -1,11 +1,12 @@
-import { Image, View, TouchableOpacity, FlatList, Modal, Text } from "react-native"
+import { Image, View, TouchableOpacity, FlatList, Modal, Text, Alert, Linking } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
-import { router } from "expo-router"
-import { useState } from "react"
+import { router, useFocusEffect } from "expo-router"
+import { useState, useCallback } from "react"
 
 import { styles } from "./styles"
 import { colors } from "@/styles/colors"
 import { categories } from "@/utils/categories"
+import { linkStorage, LinkStorage } from "@/storage/link-storage"
 
 import { Link } from "@/components/link"
 import { Option } from "@/components/option"
@@ -13,7 +14,66 @@ import { Categories } from "@/components/categories"
 
 export default function Index() {
 
+    const [showModal, setShowModal] = useState(false)
+    const [link, setLink] = useState<LinkStorage>({} as LinkStorage)
     const [category, setCategory] = useState(categories[0].name)
+    const [links, setLinks] = useState<LinkStorage[]>([])
+
+    async function getLinks() {
+        try {
+            const response = await linkStorage.get()
+            const filtered = response.filter((link) => link.category === category)
+            setLinks(filtered)
+        } catch (error) {
+            Alert.alert("Erro", "Não fi possível listar os links")
+        }
+    }
+
+
+    function handleDetails(selected: LinkStorage) {
+        setShowModal(true)
+        setLink(selected)
+    }
+
+    async function linkRemove() {
+        try {
+            await linkStorage.remove(link.id)
+            getLinks()
+            setShowModal(false)
+        } catch (error) {
+            Alert.alert("Erro", "Não foi possível excluir")
+            throw error
+        }
+    }
+
+    function handleRemove() {
+        Alert.alert("Excluir", "Deseja realmente excluir?", [
+            { style: "cancel", text: "Não" },
+            { text: "Sim", onPress: linkRemove },
+        ])
+    }
+
+
+    async function handleOpen() {
+        try{
+            await Linking.openURL(link.name)
+            // setShowModal(false)
+        }catch (error){
+            Alert.alert("Link","Não foi possível abrir o link")
+            console.log(error)
+        }
+    }
+
+
+    useFocusEffect(
+        useCallback(() => {
+            getLinks()
+        }, [category])
+    )
+
+    // useEffect(() => {
+    //     getLinks()
+    // }, [category])
 
     return (
         <View style={styles.container}>
@@ -29,31 +89,30 @@ export default function Index() {
 
 
             <FlatList
-                data={["1", "2", "3"]}
-                keyExtractor={(item) => item}
-                renderItem={() => (
-                    <Link name="Nathan" url="https://my-cv-rho-murex.vercel.app/" onDetails={() => console.log("clicou")}
-                    />
+                data={links}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <Link name={item.name} url={item.url} onDetails={() => handleDetails(item)} />
                 )}
                 style={styles.links}
                 contentContainerStyle={styles.linksContent}
                 showsVerticalScrollIndicator={false}
             />
 
-            <Modal transparent visible={false}>
+            <Modal transparent visible={showModal} animationType="slide">
                 <View style={styles.modal}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalCategory}>Curso</Text>
-                            <TouchableOpacity>
+                            <Text style={styles.modalCategory}>{link.category}</Text>
+                            <TouchableOpacity onPress={() => setShowModal(false)}>
                                 <MaterialIcons name="close" size={20} color={colors.gray[400]} />
                             </TouchableOpacity>
                         </View>
-                        <Text style={styles.modalLinkName}>Nathan Roberto</Text>
-                        <Text style={styles.modalUrl}>https://my-cv-rho-murex.vercel.app/</Text>
+                        <Text style={styles.modalLinkName}>{link.name}</Text>
+                        <Text style={styles.modalUrl}>{link.url}</Text>
                         <View style={styles.modalFooter}>
-                            <Option name="Excluir" icon="delete" variant="secondary" />
-                            <Option name="Abrir" icon="language" />
+                            <Option name="Excluir" icon="delete" variant="secondary" onPress={handleRemove} />
+                            <Option name="Abrir" icon="language" onPress={() => {handleOpen}}/>
                         </View>
                     </View>
                 </View>
