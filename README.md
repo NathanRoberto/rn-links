@@ -20,8 +20,6 @@ cd RN-LINKS
 
 2: Instale as dependências:
 npm install
-# ou
-yarn install
 
 3: Inicie o projeto
 npx expo start
